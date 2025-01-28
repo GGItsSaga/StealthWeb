@@ -1,89 +1,62 @@
 #include "Walnut/Application.h"
 #include "Walnut/EntryPoint.h"
+#include "MainLayer.h"
+#include "Encrypt.h"
+#include "Decrypt.h"
+#include "EncryptButton.h"
+#include "DecryptButton.h"
 
-#include "Walnut/Image.h"
-#include "Walnut/UI/UI.h"
+#include <iostream>
+#include <fstream>
 
-class ExampleLayer : public Walnut::Layer
-{
-public:
-	virtual void OnUIRender() override
-	{
-		ImGui::Begin("Hello");
-		ImGui::Button("Button");
-		ImGui::End();
+MainLayer::MainLayer() {
+    e = std::make_unique<Encrypt>();  
+    d = std::make_unique<Decrypt>();  
+}
 
-		ImGui::ShowDemoWindow();
+// Encryption callback
+void MainLayer::encryptCallback(const char* inputFile) {
+    e->appendFile(inputFile);
+    e->encryptAndSave();
+}
 
-		UI_DrawAboutModal();
-	}
+// Decryption callback
+void MainLayer::decryptCallback(const char* inputFile) {
+    try {
+        d->setKey(e->getKey());
 
-	void UI_DrawAboutModal()
-	{
-		if (!m_AboutModalOpen)
-			return;
+        // Appends file and decrypt the encrypted file
+        d->appendFile(inputFile);
+        d->decryptAndSaveAll(); // Assuming this method decrypts and saves the decrypted content
+    }
+    catch (const std::exception& e)
+    {
+        std::cerr << "Error during decryption: " << e.what() << std::endl;
+        // Handle decryption error if needed
+    }
+}
 
-		ImGui::OpenPopup("About");
-		m_AboutModalOpen = ImGui::BeginPopupModal("About", nullptr, ImGuiWindowFlags_AlwaysAutoResize);
-		if (m_AboutModalOpen)
-		{
-			auto image = Walnut::Application::Get().GetApplicationIcon();
-			ImGui::Image(image->GetDescriptorSet(), { 48, 48 });
+bool MainLayer::fileExists(const char* fileName) {
+    std::ifstream file(fileName);
+    return file.good();
+}
 
-			ImGui::SameLine();
-			Walnut::UI::ShiftCursorX(20.0f);
 
-			ImGui::BeginGroup();
-			ImGui::Text("Walnut application framework");
-			ImGui::Text("by Studio Cherno.");
-			ImGui::EndGroup();
+Walnut::Application* Walnut::CreateApplication(int argc, char** argv) {
+    Walnut::ApplicationSpecification spec;
+    spec.Name = "Open-Source Encryption/Decryption";
+    spec.CustomTitlebar = true;
 
-			if (Walnut::UI::ButtonCentered("Close"))
-			{
-				m_AboutModalOpen = false;
-				ImGui::CloseCurrentPopup();
-			}
-
-			ImGui::EndPopup();
-		}
-	}
-
-	void ShowAboutModal()
-	{
-		m_AboutModalOpen = true;
-	}
-private:
-	bool m_AboutModalOpen = false;
-};
-
-Walnut::Application* Walnut::CreateApplication(int argc, char** argv)
-{
-	Walnut::ApplicationSpecification spec;
-	spec.Name = "Walnut Example";
-	spec.CustomTitlebar = true;
-
-	Walnut::Application* app = new Walnut::Application(spec);
-	std::shared_ptr<ExampleLayer> exampleLayer = std::make_shared<ExampleLayer>();
-	app->PushLayer(exampleLayer);
-	app->SetMenubarCallback([app, exampleLayer]()
-	{
-		if (ImGui::BeginMenu("File"))
-		{
-			if (ImGui::MenuItem("Exit"))
-			{
-				app->Close();
-			}
-			ImGui::EndMenu();
-		}
-
-		if (ImGui::BeginMenu("Help"))
-		{
-			if (ImGui::MenuItem("About"))
-			{
-				exampleLayer->ShowAboutModal();
-			}
-			ImGui::EndMenu();
-		}
-	});
-	return app;
+    Walnut::Application* app = new Walnut::Application(spec);
+    std::shared_ptr<MainLayer> mainLayer = std::make_shared<MainLayer>();
+    app->PushLayer(mainLayer);
+    app->SetMenubarCallback([app, mainLayer]() {
+        if (ImGui::BeginMenu("Options")) {
+            if (ImGui::MenuItem("Exit")) {
+                app->Close();
+            }
+            ImGui::EndMenu();
+        }
+        });
+    return app;
 }
