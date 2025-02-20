@@ -11,7 +11,6 @@
 #include "Encrypt.h"
 #include "Decrypt.h"
 
-
 class MainLayer : public Walnut::Layer {
 private:
     std::unique_ptr<Encrypt> e;
