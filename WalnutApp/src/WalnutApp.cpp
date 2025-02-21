@@ -15,18 +15,18 @@ MainLayer::MainLayer() {
 }
 
 // Encryption callback
-void MainLayer::encryptCallback(const char* inputFile) {
-    e->appendFile(inputFile);
+void MainLayer::encryptCallback(const char* inputFileEncrypt, const std::string& passkey) {
+    e->setPassKey(passkey);
+    e->appendFile(inputFileEncrypt);
     e->encryptAndSave();
 }
 
 // Decryption callback
-void MainLayer::decryptCallback(const char* inputFile) {
+void MainLayer::decryptCallback(const char* inputFileDecrypt, const std::string& passkey) {
     try {
-        d->setKey(e->getKey());
-
+        d->setPasskey(passkey);
         // Appends file and decrypt the encrypted file
-        d->appendFile(inputFile);
+        d->appendFile(inputFileDecrypt);
         d->decryptAndSaveAll(); // Assuming this method decrypts and saves the decrypted content
     }
     catch (const std::exception& e)

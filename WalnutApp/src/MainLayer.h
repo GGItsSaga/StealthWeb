@@ -15,17 +15,18 @@ class MainLayer : public Walnut::Layer {
 private:
     std::unique_ptr<Encrypt> e;
     std::unique_ptr<Decrypt> d;
-    char inputFileEncrypt[512] = "";
-    char inputFileDecrypt[512] = "";
+    char m_inputFileEncrypt[128] = "";
+    char m_inputFileDecrypt[128] = "";
+    std::string m_PasskeyInput = std::string(128, '\0');
     std::string encryptError, decryptError;
-
-    void encryptCallback(const char* inputFile);
-    void decryptCallback(const char* inputFile);
-    bool fileExists(const char* fileName);
 
 public:
     MainLayer();
     inline virtual void OnUIRender() override; // Declare and implement the inline function
+
+    void encryptCallback(const char* inputFile, const std::string& passkey);
+    void decryptCallback(const char* inputFile, const std::string& passkey);
+    bool fileExists(const char* fileName);
 };
 
 inline void MainLayer::OnUIRender() {
@@ -48,22 +49,22 @@ inline void MainLayer::OnUIRender() {
     ImGui::SetCursorPosX(horiPadding);
 
     // Encrypt Button
-    encryptButton(inputFileEncrypt, encryptError,
-        [this](const char* file) { encryptCallback(file); },
-        [this](const char* file) { return fileExists(file); });
+    encryptButton(m_inputFileEncrypt, encryptError, m_PasskeyInput,
+        [this](const char* file, const std::string& key) { 
+            encryptCallback(file, key); },
+        [this](const char* file) { 
+            return fileExists(file); });
 
     ImGui::SameLine();
 
     // Decrypt Button
-    decryptButton(inputFileDecrypt, decryptError,
-        [this](const char* file) { decryptCallback(file); },
-        [this](const char* file) { return fileExists(file); });
-
-    //// Input field for decryption key
-    //ImGui::InputText("Decryption Key", decryptionKeyInput, sizeof(decryptionKeyInput));
+    decryptButton(m_inputFileDecrypt, decryptError, m_PasskeyInput, 
+        [this](const char* file, const std::string& key) { 
+            decryptCallback(file, key); },
+        [this](const char* file) { 
+            return fileExists(file); });
 
     ImGui::End();
 }
 
 #endif // MAIN_LAYER_H
-

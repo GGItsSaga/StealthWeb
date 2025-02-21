@@ -4,9 +4,10 @@
 #include <string>
 
 // Decrypt button
-inline void decryptButton(char* inputFileDecrypt, std::string& decryptError,
-    const std::function<void(const char*)>& decryptCallback,
+inline void decryptButton(char* inputFileDecrypt, std::string& decryptError, std:: string& passkeyInput,
+    const std::function<void(const char*,std::string&)>& decryptCallback,
     const std::function<bool(const char*)>& fileExists) {
+
     if (ImGui::Button("Decrypt", ImVec2(300.0f, 100.0f))) {
         ImGui::OpenPopup("Decrypt Files");
     }
@@ -15,10 +16,19 @@ inline void decryptButton(char* inputFileDecrypt, std::string& decryptError,
         ImGui::Text("Enter file name for Decryption:");
         ImGui::InputText("##File to Decrypt", inputFileDecrypt, 128);
 
+        ImGui::Text("Enter Decryption Passkey:");
+        ImGui::InputText("###Passkey:", &passkeyInput[0], 128);
+
         if (ImGui::Button("Decrypt")) {
             if (fileExists(inputFileDecrypt)) {
-                decryptCallback(inputFileDecrypt);
-                ImGui::CloseCurrentPopup();
+                try {
+                    decryptCallback(inputFileDecrypt, passkeyInput);
+                    ImGui::CloseCurrentPopup();
+                }
+                catch (const std::exception& e) {
+                    decryptError = "Error: Wrong passkey.";
+                }
+                
             }
             else {
                 decryptError = "Error: File not found.";

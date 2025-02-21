@@ -4,21 +4,27 @@
 #include <string>
 
 // Encrypt button
-inline void encryptButton(char* inputFileEncrypt, std::string& encryptError,
-    const std::function<void(const char*)>& encryptCallback,
-    const std::function<bool(const char*)>& fileExists) {
+inline void encryptButton(char* inputFileEncrypt, std::string& encryptError, std::string& passkeyInput,
+    const std::function<void(const char*, const std::string&)>& encryptCallback,
+    const std::function<bool(const char*)>& fileExists){
+
     if (ImGui::Button("Encrypt", ImVec2(300.0f, 100.0f))) {
         ImGui::OpenPopup("Encrypt Files");
     }
 
     if (ImGui::BeginPopupModal("Encrypt Files", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
 
+        // File name input
         ImGui::Text("Enter file name for Encryption:");
         ImGui::InputText("##File to Encrypt", inputFileEncrypt, 128);
 
+        // Passkey input
+        ImGui::Text("Enter Encryption passkey:");
+        ImGui::InputText("###Passkey:", &passkeyInput[0], passkeyInput.capacity());
+
         if (ImGui::Button("Encrypt")) {
             if (fileExists(inputFileEncrypt)) {
-                encryptCallback(inputFileEncrypt);
+                encryptCallback(inputFileEncrypt, passkeyInput);
                 ImGui::CloseCurrentPopup();
             }
             else {
