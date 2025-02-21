@@ -24,6 +24,10 @@ inline void decryptButton(char* inputFileDecrypt, std::string& decryptError, std
                 try {
                     decryptCallback(inputFileDecrypt, passkeyInput);
                     ImGui::CloseCurrentPopup();
+
+                    // Clears input fields on close
+                    std::memset(inputFileDecrypt, 0, 128);
+                    passkeyInput.clear();
                 }
                 catch (const std::exception& e) {
                     decryptError = "Error: Wrong passkey.";
@@ -39,6 +43,10 @@ inline void decryptButton(char* inputFileDecrypt, std::string& decryptError, std
 
         if (ImGui::Button("Cancel")) {
             ImGui::CloseCurrentPopup();
+
+            // Clears input fields on close
+            std::memset(inputFileDecrypt, 0, 128);
+            passkeyInput.clear();
         }
 
         if (!decryptError.empty()) {

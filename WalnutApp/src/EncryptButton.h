@@ -26,6 +26,10 @@ inline void encryptButton(char* inputFileEncrypt, std::string& encryptError, std
             if (fileExists(inputFileEncrypt)) {
                 encryptCallback(inputFileEncrypt, passkeyInput);
                 ImGui::CloseCurrentPopup();
+
+                // Clears input fields on close
+                std::memset(inputFileEncrypt, 0, 128);
+                passkeyInput.clear();
             }
             else {
                 encryptError = "Error: File not found.";
@@ -36,6 +40,10 @@ inline void encryptButton(char* inputFileEncrypt, std::string& encryptError, std
 
         if (ImGui::Button("Cancel")) {
             ImGui::CloseCurrentPopup();
+
+            // Clears input fields on close
+            std::memset(inputFileEncrypt, 0, 128);
+            passkeyInput.clear();
         }
 
         if (!encryptError.empty()) {
