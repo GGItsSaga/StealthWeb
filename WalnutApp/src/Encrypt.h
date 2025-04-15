@@ -18,9 +18,7 @@ private:
         if (!file.is_open()) {
             throw std::runtime_error("Error opening file: " + filePath.string());
         }
-        std::string content((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
-        file.close();
-        return content;
+        return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     }
 
     std::string encryptText(const std::string& plainText) {
@@ -28,10 +26,6 @@ private:
         randombytes_buf(nonce, sizeof(nonce));
 
         std::vector<unsigned char> key = deriveKey(passkey);
-
-        std::cout << "Encryption Key: ";
-        for (auto b : key) std::cout << std::hex << (int)b;
-        std::cout << std::endl;
 
         std::vector<unsigned char> cipherText(plainText.size() + crypto_secretbox_MACBYTES);
         if (crypto_secretbox_easy(cipherText.data(),
@@ -42,10 +36,6 @@ private:
             throw std::runtime_error("Encryption failed");
         }
 
-        std::cout << "Encryption Nonce: ";
-        for (auto b : nonce) std::cout << std::hex << (int)b;
-        std::cout << std::endl;
-
         std::vector<unsigned char> finalOutput;
         finalOutput.insert(finalOutput.end(), nonce, nonce + crypto_secretbox_NONCEBYTES);
         finalOutput.insert(finalOutput.end(), cipherText.begin(), cipherText.end());
@@ -54,18 +44,12 @@ private:
     }
 
     std::vector<unsigned char> deriveKey(const std::string& passphrase) {
-        std::vector<unsigned char> key(crypto_secretbox_KEYBYTES); // 32 bytes
-
-        if (crypto_generichash(
-            key.data(), key.size(),
+        std::vector<unsigned char> key(crypto_secretbox_KEYBYTES);
+        crypto_generichash(key.data(), key.size(),
             reinterpret_cast<const unsigned char*>(passphrase.data()), passphrase.size(),
-            nullptr, 0) != 0) {
-            throw std::runtime_error("Key derivation failed");
-        }
-
+            nullptr, 0);
         return key;
     }
-
 
     void writeFile(const std::filesystem::path& filePath, const std::string& content) {
         std::ofstream file(filePath, std::ios::binary);

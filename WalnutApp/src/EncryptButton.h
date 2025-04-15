@@ -14,18 +14,16 @@ inline void encryptButton(char* inputFileEncrypt, std::string& encryptError, std
 
     if (ImGui::BeginPopupModal("Encrypt Files", NULL, ImGuiWindowFlags_AlwaysAutoResize)) {
 
-        // File name input
         ImGui::Text("Enter file name for Encryption:");
         ImGui::InputText("##File to Encrypt", inputFileEncrypt, 128);
 
-        // Passkey input using a safe temp buffer
         ImGui::Text("Enter Encryption passkey:");
         static char tempPasskey[128] = "";
         ImGui::InputText("###Passkey:", tempPasskey, sizeof(tempPasskey), ImGuiInputTextFlags_Password);
 
         if (ImGui::Button("Encrypt")) {
             if (fileExists(inputFileEncrypt)) {
-                passkeyInput = std::string(tempPasskey); // trim off any nulls or garbage
+                passkeyInput = std::string(tempPasskey);
                 encryptCallback(inputFileEncrypt, passkeyInput);
                 ImGui::CloseCurrentPopup();
 
@@ -54,5 +52,3 @@ inline void encryptButton(char* inputFileEncrypt, std::string& encryptError, std
         ImGui::EndPopup();
     }
 }
-
-#pragma once
