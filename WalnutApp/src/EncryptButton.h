@@ -6,7 +6,7 @@
 // Encrypt button
 inline void encryptButton(char* inputFileEncrypt, std::string& encryptError, std::string& passkeyInput,
     const std::function<void(const char*, const std::string&)>& encryptCallback,
-    const std::function<bool(const char*)>& fileExists){
+    const std::function<bool(const char*)>& fileExists) {
 
     if (ImGui::Button("Encrypt", ImVec2(300.0f, 100.0f))) {
         ImGui::OpenPopup("Encrypt Files");
@@ -18,18 +18,20 @@ inline void encryptButton(char* inputFileEncrypt, std::string& encryptError, std
         ImGui::Text("Enter file name for Encryption:");
         ImGui::InputText("##File to Encrypt", inputFileEncrypt, 128);
 
-        // Passkey input
+        // Passkey input using a safe temp buffer
         ImGui::Text("Enter Encryption passkey:");
-        ImGui::InputText("###Passkey:", &passkeyInput[0], passkeyInput.capacity());
+        static char tempPasskey[128] = "";
+        ImGui::InputText("###Passkey:", tempPasskey, sizeof(tempPasskey), ImGuiInputTextFlags_Password);
 
         if (ImGui::Button("Encrypt")) {
             if (fileExists(inputFileEncrypt)) {
+                passkeyInput = std::string(tempPasskey); // trim off any nulls or garbage
                 encryptCallback(inputFileEncrypt, passkeyInput);
                 ImGui::CloseCurrentPopup();
 
-                // Clears input fields on close
                 std::memset(inputFileEncrypt, 0, 128);
                 passkeyInput.clear();
+                std::memset(tempPasskey, 0, sizeof(tempPasskey));
             }
             else {
                 encryptError = "Error: File not found.";
@@ -41,9 +43,9 @@ inline void encryptButton(char* inputFileEncrypt, std::string& encryptError, std
         if (ImGui::Button("Cancel")) {
             ImGui::CloseCurrentPopup();
 
-            // Clears input fields on close
             std::memset(inputFileEncrypt, 0, 128);
             passkeyInput.clear();
+            std::memset(tempPasskey, 0, sizeof(tempPasskey));
         }
 
         if (!encryptError.empty()) {
@@ -52,4 +54,5 @@ inline void encryptButton(char* inputFileEncrypt, std::string& encryptError, std
         ImGui::EndPopup();
     }
 }
+
 #pragma once

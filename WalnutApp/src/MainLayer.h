@@ -17,7 +17,7 @@ private:
     std::unique_ptr<Decrypt> d;
     char m_inputFileEncrypt[128] = "";
     char m_inputFileDecrypt[128] = "";
-    std::string m_PasskeyInput = std::string(128, '\0');
+    std::string m_PasskeyInput;
     std::string encryptError, decryptError;
 
 public:

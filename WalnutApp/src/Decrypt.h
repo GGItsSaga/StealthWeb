@@ -10,9 +10,8 @@
 class Decrypt {
 private:
     std::vector<std::string> filenames_;
-    std::string passkey_; // Passkey for decryption
+    std::string passkey_;
 
-    // Reading the file into a string
     std::string readFile(const std::string& filename) {
         std::ifstream file(filename, std::ios::binary);
         if (!file) {
@@ -24,7 +23,6 @@ private:
         return content;
     }
 
-    // Writing the contents on file in binary mode, just as we did in encryption
     void writeFile(const std::string& filename, const std::string& content) {
         std::ofstream file(filename, std::ios::binary);
         if (!file) {
@@ -34,7 +32,22 @@ private:
         file.write(content.data(), content.size());
         file.close();
     }
-    // Decrypting ciphertext file with crypto_secretbox_easy with the provided passkey:
+
+    std::vector<unsigned char> deriveKey(const std::string& passphrase) {
+        std::vector<unsigned char> key(crypto_secretbox_KEYBYTES); // 32 bytes
+
+        if (crypto_generichash(
+            key.data(), key.size(),
+            reinterpret_cast<const unsigned char*>(passphrase.data()), passphrase.size(),
+            nullptr, 0) != 0) {
+            throw std::runtime_error("Key derivation failed");
+        }
+
+        return key;
+    }
+
+
+
     void decryptAndSave(const std::string& ciphertext, const std::string& passkey, const std::string& filename) {
         try {
             const size_t expectedSize = crypto_secretbox_NONCEBYTES + crypto_secretbox_MACBYTES;
@@ -42,41 +55,46 @@ private:
                 throw std::runtime_error("Insufficient ciphertext size for decryption");
             }
 
-            // Extract nonce from the beginning of the ciphertext:
             std::vector<unsigned char> nonce(ciphertext.begin(), ciphertext.begin() + crypto_secretbox_NONCEBYTES);
-
-            // Decrypt the rest of the ciphertext since the remaining bytes are as such
             std::vector<unsigned char> cipherData(ciphertext.begin() + crypto_secretbox_NONCEBYTES, ciphertext.end());
-
             std::vector<unsigned char> decryptedText(cipherData.size() - crypto_secretbox_MACBYTES);
+
+            std::vector<unsigned char> key = deriveKey(passkey);
+
+            std::cout << "Decryption Key: ";
+            for (auto b : key) std::cout << std::hex << (int)b;
+            std::cout << std::endl;
+
+            std::cout << "Decryption Nonce: ";
+            for (auto b : nonce) std::cout << std::hex << (int)b;
+            std::cout << std::endl;
+
             if (crypto_secretbox_open_easy(
-                decryptedText.data(),cipherData.data(),cipherData.size(),nonce.data(),
-                reinterpret_cast<const unsigned char*>(passkey.data())) != 0) {
+                decryptedText.data(), cipherData.data(), cipherData.size(),
+                nonce.data(), key.data()) != 0) {
                 throw std::runtime_error("Error decrypting file. Wrong passkey.");
             }
 
             std::string result(reinterpret_cast<const char*>(decryptedText.data()), decryptedText.size());
             writeFile("decrypted_" + filename, result);
-
         }
         catch (const std::exception& e) {
             std::cerr << "Exception during decryption: " << e.what() << std::endl;
-            throw;  // Re-throw the exception after logging
+            throw;
         }
     }
 
 public:
-    Decrypt() { // Default constructor
+    Decrypt() {
         if (sodium_init() < 0) {
             throw std::runtime_error("Error initializing Libsodium");
         }
     }
 
-    ~Decrypt() { // Destructor
+    ~Decrypt() {
         sodium_memzero(&passkey_[0], passkey_.size());
     }
 
-    // Setting the decryption key
     void setPasskey(const std::string& p) {
         passkey_ = p;
     }
@@ -97,6 +115,5 @@ public:
         }
     }
 };
-
 
 #endif
