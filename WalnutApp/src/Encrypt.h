@@ -56,6 +56,7 @@ private:
         if (!file.is_open()) {
             throw std::runtime_error("File write error: " + filePath.string());
         }
+
         file.write(content.data(), content.size());
         file.close();
     }

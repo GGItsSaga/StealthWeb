@@ -1,11 +1,13 @@
 #pragma once
 #ifndef DECRYPT_H
 #define DECRYPT_H
+
 #include <sodium.h>
 #include <fstream>
 #include <iostream>
 #include <vector>
 #include <stdexcept>
+#include <filesystem>
 
 class Decrypt {
 private:
@@ -20,20 +22,28 @@ private:
         return std::string((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
     }
 
-    void writeFile(const std::string& filename, const std::string& content) {
-        std::ofstream file(filename, std::ios::binary);
+    void writeFile(const std::string& originalPath, const std::string& content) {
+        std::filesystem::path inputPath(originalPath);
+        std::filesystem::path outputPath = inputPath.parent_path() / ("decrypted_" + inputPath.filename().string());
+
+        std::ofstream file(outputPath, std::ios::binary);
         if (!file) {
-            throw std::runtime_error("Error creating or opening file: " + filename);
+            throw std::runtime_error("Error creating or opening file: " + outputPath.string());
         }
+
         file.write(content.data(), content.size());
         file.close();
     }
 
+
     std::vector<unsigned char> deriveKey(const std::string& passphrase) {
         std::vector<unsigned char> key(crypto_secretbox_KEYBYTES);
-        crypto_generichash(key.data(), key.size(),
+        if (crypto_generichash(
+            key.data(), key.size(),
             reinterpret_cast<const unsigned char*>(passphrase.data()), passphrase.size(),
-            nullptr, 0);
+            nullptr, 0) != 0) {
+            throw std::runtime_error("Key derivation failed");
+        }
         return key;
     }
 
@@ -56,7 +66,7 @@ private:
         }
 
         std::string result(reinterpret_cast<const char*>(decryptedText.data()), decryptedText.size());
-        writeFile("decrypted_" + filename, result);
+        writeFile(filename, result);
     }
 
 public:
